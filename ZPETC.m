@@ -28,16 +28,31 @@ s = 2;
 C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.7783) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
 
 G_z = TF_z * C_z;
-%% Testing trajectory tracking
+%% Smooth trajectory generation
 
-t = [0:ts:20];
+t_f = 15;
+t = [0:ts:t_f];
+
 
 % yd = sin(t)/5;
 
-yd = t/10;
-yd(101:end)=yd(101);
+% Something is wrong with these equations..
+
+y0 = 0; yf = 1;
+vy0 = 0; vyf = 0;
+ay0 = 0; ayf = 0;
+
+a0 = y0; a1 = vy0; a2 = ay0/2;
+
+a3 = 1/(2*t_f^3) * (20*yf - 20*y0 - (8*vyf + 12*vy0)*t_f - (3*ay0-ayf)*(t_f^2));
+a4 = 1/(2*t_f^4) * (30*yf - 30*y0 + (14*vyf + 16*vy0)*t_f + (3*ay0-2*ayf)*(t_f^2));
+a5 = 1/(2*t_f^5) * (12*yf - 12*y0 - (6*vyf + 6*vy0)*t_f - (ay0-ayf)*(t_f^2));
+
+yd=a0 + a1*t + a2*t.^2 + a3*t.^3 + a4*t.^4 + a5*t.^5;
 
 yd = yd_s(yd, s);
+
+%% Controller Testing
 
 r_y = lsim(C_z, yd, t);
 
@@ -85,7 +100,7 @@ plot(t,out)
 title('Combined Transfer Function')
 xlabel('t (s)')
 ylabel('m')
-legend(['y_d', 'y'])
+legend(["y_d", "y"])
 
 %%
 % writematrix(round(100*r_y/0.2), 'r_y.csv');
