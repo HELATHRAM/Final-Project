@@ -1,4 +1,4 @@
-clc; clear; close all;
+% clc; clear; close all;
 
 %% Plant Properties
 L = 1.730;  % m  Length from trolley to hook; we can try three lengths for the cable 
@@ -24,38 +24,57 @@ TF_z = c2d(G,0.049);
 z = tf('z', 0.049);
 
 s = 2;
-C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.7783) * z^-s) / ((z-0.0848)*(1+1.7783)^2)
-
+C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.7783) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
 
 %% Testing trajectory tracking
 
-t = [0:0.049:10];
+t = [0:0.049:6];
 
-yd = sin(t)/10;
+yd = t/10;
+% yd(111:end)=yd(111);
+
 yd = yd_s(yd, s);
 
-u = lsim(C_z, yd, t);
-u = actuator_limit(u, -.2, .2);
+r_y = lsim(C_z, yd, t);
 
-y = lsim(G, u, t);
+y_max = 0.2;
+y_min = -0.2;
+r_y = actuator_limit(r_y, y_min, y_max);
 
+y = lsim(G, r_y, t);
+
+figure()
 plot(t, yd);
 hold on
-plot(t, u)
+% plot(t, r_y)
 plot(t, y)
-legend(["yd", "u", "y"])
+legend(["yd", "y"])
+title('Simulated ZPETC')
+xlabel('time (s)')
+ylabel('m')
 
 
 figure(2)
 subplot (3,1,1)
 plot(t, yd);
-title('yd')
+title('Desired Trajectory y_d')
+xlabel('time (s)')
+ylabel('m')
+
 subplot (3,1,2)
-plot(t, u);
-title('u');
+plot(t, r_y);
+title('Control Signal r_y');
+xlabel('time (s)')
+ylabel('m/s')
+
 subplot (3,1,3)
 plot(t, y);
-title('y')
+title('Simulated Plant Output y')
+xlabel('time (s)')
+ylabel('m')
+
+%%
+writematrix(round(100*r_y/0.2), 'r_y.csv');
 
 
 %%
