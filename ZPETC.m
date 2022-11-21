@@ -1,4 +1,4 @@
-% clc; clear; close all;
+clc; clear; close all;
 
 %% Plant Properties
 L = 1.730;  % m  Length from trolley to hook; we can try three lengths for the cable 
@@ -18,20 +18,24 @@ TF_s=tf([num],[den]); % plant TF in s-domain - Theta/v
 s = tf('s');
 G = 1/s + TF_s;
 
-TF_z = c2d(G,0.049);
+ts = 0.049;
+TF_z = c2d(G, ts);
 
 %% Z Domain Controller
-z = tf('z', 0.049);
+z = tf('z', ts);
 
 s = 2;
 C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.7783) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
 
+G_z = TF_z * C_z;
 %% Testing trajectory tracking
 
-t = [0:0.049:6];
+t = [0:ts:20];
+
+% yd = sin(t)/5;
 
 yd = t/10;
-% yd(111:end)=yd(111);
+yd(101:end)=yd(101);
 
 yd = yd_s(yd, s);
 
@@ -73,8 +77,18 @@ title('Simulated Plant Output y')
 xlabel('time (s)')
 ylabel('m')
 
+out = lsim(G_z, yd, t);
+figure()
+hold on
+plot(t, yd)
+plot(t,out)
+title('Combined Transfer Function')
+xlabel('t (s)')
+ylabel('m')
+legend(['y_d', 'y'])
+
 %%
-writematrix(round(100*r_y/0.2), 'r_y.csv');
+% writematrix(round(100*r_y/0.2), 'r_y.csv');
 
 
 %%
