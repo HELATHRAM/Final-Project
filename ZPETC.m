@@ -1,7 +1,7 @@
 clc; clear; close all;
 
 %% Plant Properties
-L = 1.730;  % m  Length from trolley to hook; we can try three lengths for the cable 
+L = 1.730; % m  Length from trolley to hook; we can try three lengths for the cable 
 g=9.81; % m/s 
 wn=sqrt(g/L); % rad/s
 x1 = 0.079-0.007; % mm Magnitude of the first oscillation
@@ -29,10 +29,8 @@ C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.7783) *
 
 G_z = TF_z * C_z;
 %% Smooth trajectory generation
-
 t_f = 15;
 t = [0:ts:t_f];
-
 
 % yd = sin(t)/5;
 
