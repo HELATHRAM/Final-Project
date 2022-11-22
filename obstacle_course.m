@@ -46,3 +46,51 @@ obst5_x = [550 855];
 plot(obst5_y, obst5_x, 'Color', [0.6350 0.0780 0.1840])
 
 legend(["Start Position", "Goal", "Obstacles"])
+
+%% ROUGH TRJECTORY
+
+speeds = [0.1 0.2]*1000;
+
+m1 = [0 -55];
+m2 = [570 0];
+m3 = [0 825];
+m4 = [400 0];
+
+total_dist = abs(m1) + abs(m2) + abs(m3) + abs(m4)
+
+times = abs(m1)./speeds + abs(m2)./speeds + abs(m3)./speeds + abs(m4)./speeds
+
+total_times = [14 7];
+
+
+t1=total_times(2) * 55/(total_dist(2));
+t2=total_times(1) * 570/(total_dist(1));
+t3=total_times(2) * 825/(total_dist(2));
+t4=total_times(1) * 400/(total_dist(1));
+
+t = [0:0.049:sum(total_times)];
+
+d1 = floor(t1/.049);
+d2 = floor(t2/.049);
+d3 = floor(t3/.049);
+d4 = floor(t4/.049);
+
+traj1 = [linspace(0,m1(1),d1)',linspace(0,m1(2),d1)'] + [xstart, ystart];
+traj2 = [linspace(0,m2(1),d2)',linspace(0,m2(2),d2)'] + traj1(end,:);
+traj3 = [linspace(0,m3(1),d3)',linspace(0,m3(2),d3)'] + traj2(end,:);
+traj4 = [linspace(0,m4(1),d4)',linspace(0,m4(2),d4)'] + traj3(end,:);
+
+traj = [traj1;traj2;traj3;traj4];
+writematrix(traj, 'traj.csv');
+
+
+scatter(traj(:,2), traj(:,1), 'b')
+
+
+start = [xstart, ystart];
+start+m1+m2+m3+m4;
+
+
+
+
+

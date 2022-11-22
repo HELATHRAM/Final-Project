@@ -41,15 +41,22 @@ a5=-0.0157;
 %% Z Domain Controller
 z = tf('z', 0.049);
 C_z =((z^-7)*((2*a0)+a1*(z+z^-1)+a2*(z^2+z^-2)+a3*(z^3+z^-3)+a4*(z^4+z^-4)+a5*(z^5+z^-5))*((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.77) )) / ((z-0.0848))
-tot=z^-7*((2*a0)+a1*(z+z^-1)+a2*(z^2+z^-2)+a3*(z^3+z^-3)+a4*(z^4+z^-4)+a5*(z^5+z^-5))*(1+1.6934*z-0.15086*z^2)*(1+1.6934*z^-1-0.15086*z^-2)
+
+tot=z^-7*((2*a0)+a1*(z+z^-1)+a2*(z^2+z^-2)+a3*(z^3+z^-3)+a4*(z^4+z^-4)+a5*(z^5+z^-5))*(1+1.6934*z-0.15086*z^2)*(1+1.6934*z^-1-0.15086*z^-2);
+% tot = C_z*TF_z;
+
 %% Testing trajectory tracking
 t = [0:0.049:10];
-yd = 0.1*t
+yd = 0.1*t;
+yd(150:end)=yd(150);
+
 yd = yd_s(yd);
+
+
 u = lsim(C_z, yd, t);
 u = actuator_limit(u, -.2, .2);
 
-% y = lsim(TF_z, u, t);
+% y = lsim(G, u, t);
 y = lsim(tot, yd, t);
 plot(t, yd);
 hold on
@@ -75,8 +82,9 @@ function u = actuator_limit(u, min, max)
     u(u>max)=max;
 end
 
-function yd = yd_s(yd, s)
-    yd = [yd(8:length(yd)), yd(1:7)]; 
+function yd = yd_s(yd)
+    s=7;
+    yd = [yd(s+1:length(yd)), ones(1, s)*yd(length(yd))]; 
 
 end
 

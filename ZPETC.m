@@ -25,7 +25,8 @@ TF_z = c2d(G, ts);
 z = tf('z', ts);
 
 s = 2;
-C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.7783) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
+% C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.7783) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
+C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 0.5623) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
 
 G_z = TF_z * C_z;
 %% Smooth trajectory generation
@@ -48,15 +49,18 @@ a5 = 1/(2*t_f^5) * (12*yf - 12*y0 - (6*vyf + 6*vy0)*t_f - (ay0-ayf)*(t_f^2));
 
 yd=a0 + a1*t + a2*t.^2 + a3*t.^3 + a4*t.^4 + a5*t.^5;
 
+% yd = t/10;
+% yd(150:end) = yd(150);
+
 yd = yd_s(yd, s);
 
-%% Controller Testing
 
+%% Controller Testing
 r_y = lsim(C_z, yd, t);
 
 y_max = 0.2;
 y_min = -0.2;
-r_y = actuator_limit(r_y, y_min, y_max);
+% r_y = actuator_limit(r_y, y_min, y_max);
 
 y = lsim(G, r_y, t);
 
@@ -69,7 +73,6 @@ legend(["yd", "y"])
 title('Simulated ZPETC')
 xlabel('time (s)')
 ylabel('m')
-
 
 figure(2)
 subplot (3,1,1)
@@ -112,7 +115,6 @@ end
 
 function yd = yd_s(yd, s)
     yd = [yd(s+1:length(yd)), ones(1, s)*yd(length(yd))]; 
-
 end
 
 function out = Damping_Ratio_Log_Decrement(x1,x3)
