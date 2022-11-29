@@ -54,10 +54,10 @@ yd = yd_s(yd);
 
 
 u = lsim(C_z, yd, t);
-u = actuator_limit(u, -.2, .2);
+% u = actuator_limit(u, -.2, .2);
 
-% y = lsim(G, u, t);
-y = lsim(tot, yd, t);
+y = lsim(G, u*5000, t);
+% y = lsim(tot, yd, t);
 plot(t, yd);
 hold on
 plot(t, u)

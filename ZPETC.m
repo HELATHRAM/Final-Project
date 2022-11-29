@@ -1,4 +1,4 @@
-clc; clear; close all;
+clear; close all;
 
 %% Plant Properties
 L = 1.730; % m  Length from trolley to hook; we can try three lengths for the cable 
@@ -18,49 +18,55 @@ TF_s=tf([num],[den]); % plant TF in s-domain - Theta/v
 s = tf('s');
 G = 1/s + TF_s;
 
-ts = 0.049;
-TF_z = c2d(G, ts);
+ts = 0.051;
+TF_z = c2d(G, ts, 'tustin');
 
 %% Z Domain Controller
 z = tf('z', ts);
 
-s = 2;
+s = 3;
 % C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.7783) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
-C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 0.5623) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
+% C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 0.5623) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
+C_z = (1/0.0001745) * ((z^3 - 2.979*z^2 + 2.973*z - 0.9936) * ((z^-1) + 1.0177) * z^-1) / ((z+0.0702022)*(z+0.98257)*(1+1.0177)^2);
+
+% C_z = C_z / 1.7;
 
 G_z = TF_z * C_z;
+
 %% Smooth trajectory generation
-t_f = 15;
-t = [0:ts:t_f];
 
 % yd = sin(t)/5;
 
-% Something is wrong with these equations..
+y0 = 0;
+yf = 10;
 
-y0 = 0; yf = 1;
-vy0 = 0; vyf = 0;
-ay0 = 0; ayf = 0;
+tf = yf/0.1;
+t = [0:ts:tf];
 
-a0 = y0; a1 = vy0; a2 = ay0/2;
+yd0 = 0;
+ydf = 0;
 
-a3 = 1/(2*t_f^3) * (20*yf - 20*y0 - (8*vyf + 12*vy0)*t_f - (3*ay0-ayf)*(t_f^2));
-a4 = 1/(2*t_f^4) * (30*yf - 30*y0 + (14*vyf + 16*vy0)*t_f + (3*ay0-2*ayf)*(t_f^2));
-a5 = 1/(2*t_f^5) * (12*yf - 12*y0 - (6*vyf + 6*vy0)*t_f - (ay0-ayf)*(t_f^2));
+a0 = y0;
+a1 = 0;
+a2 = 3/(tf^2) * (yf - y0);
+a3 = -2/(tf^3)*(yf-y0);
 
-yd=a0 + a1*t + a2*t.^2 + a3*t.^3 + a4*t.^4 + a5*t.^5;
+yd = a0 + a1*t + a2*t.^2 + a3*t.^3;
 
-% yd = t/10;
+% yd = t/50;
 % yd(150:end) = yd(150);
 
 yd = yd_s(yd, s);
-
+% yd = 0 * yd;
+% yd(1)=.1;
 
 %% Controller Testing
 r_y = lsim(C_z, yd, t);
 
 y_max = 0.2;
 y_min = -0.2;
-% r_y = actuator_limit(r_y, y_min, y_max);
+r_y = actuator_limit(r_y, y_min, y_max);
+r_y = r_y/1.7;
 
 y = lsim(G, r_y, t);
 
@@ -103,9 +109,10 @@ xlabel('t (s)')
 ylabel('m')
 legend(["y_d", "y"])
 
+disp(sprintf('yd: %d\ntf: %d\n perc overshoot: %.3f', yf, tf, (y(end)-yd(end))/yf));
+
 %%
 % writematrix(round(100*r_y/0.2), 'r_y.csv');
-
 
 %%
 function u = actuator_limit(u, min, max)
