@@ -18,6 +18,7 @@ TF_s=tf([num],[den]); % plant TF in s-domain - Theta/v
 s = tf('s');
 G = 1/s + TF_s;
 
+
 ts = 0.051;
 TF_z = c2d(G, ts, 'tustin');
 
@@ -25,9 +26,9 @@ TF_z = c2d(G, ts, 'tustin');
 z = tf('z', ts);
 
 s = 3;
-% C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.7783) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
+C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 1.7783) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
 % C_z = (1/0.0002613) * ((z^3 - 2.98*z^2 + 2.974*z - 0.9939) * ((z^-1) + 0.5623) * z^-s) / ((z-0.0848)*(1+1.7783)^2);
-C_z = (1/0.0001745) * ((z^3 - 2.979*z^2 + 2.973*z - 0.9936) * ((z^-1) + 1.0177) * z^-1) / ((z+0.0702022)*(z+0.98257)*(1+1.0177)^2);
+% C_z = (1/0.0001745) * ((z^3 - 2.979*z^2 + 2.973*z - 0.9936) * ((z^-1) + 1.0177) * z^-1) / ((z+0.0702022)*(z+0.98257)*(1+1.0177)^2);
 
 % C_z = C_z / 1.7;
 
@@ -38,25 +39,33 @@ G_z = TF_z * C_z;
 % yd = sin(t)/5;
 
 y0 = 0;
-yf = 10;
+yf = 15;
 
 tf = yf/0.1;
+% tf = 15;
 t = [0:ts:tf];
 
 yd0 = 0;
 ydf = 0;
 
-a0 = y0;
-a1 = 0;
-a2 = 3/(tf^2) * (yf - y0);
-a3 = -2/(tf^3)*(yf-y0);
+ydd0 = 0;
+yddf = 0;
+    
+a0 = y0; a1 = yd0; a2 = ydd0/2;
 
-yd = a0 + a1*t + a2*t.^2 + a3*t.^3;
+a3 = 1/(2*tf^3) * ( 20*yf - 20*y0 - (8*ydf + 12*yd0)*tf - (3*ydd0 - yddf)*tf^2 );
+a4 = 1/(2*tf^4) * ( 30*y0 - 30*yf + (14*ydf + 16*yd0)*tf + (3*ydd0 - 2*yddf)*tf^2 );
+a5 = 1/(2*tf^5) * ( 12*yf - 12*y0 - (6*ydf + 6*yd0)*tf - (ydd0 - yddf)*tf^2 );
+
+yd = a0 + a1*t + a2*t.^2 + a3*t.^3 + a4*t.^4 + a5*t.^5;
 
 % yd = t/50;
 % yd(150:end) = yd(150);
+vel = diff(yd)/ts;
+accel =diff(diff(yd))/ts;
 
 yd = yd_s(yd, s);
+
 % yd = 0 * yd;
 % yd(1)=.1;
 
@@ -66,7 +75,7 @@ r_y = lsim(C_z, yd, t);
 y_max = 0.2;
 y_min = -0.2;
 r_y = actuator_limit(r_y, y_min, y_max);
-r_y = r_y/1.7;
+% r_y = r_y/1.7;
 
 y = lsim(G, r_y, t);
 
@@ -109,7 +118,7 @@ xlabel('t (s)')
 ylabel('m')
 legend(["y_d", "y"])
 
-disp(sprintf('yd: %d\ntf: %d\n perc overshoot: %.3f', yf, tf, (y(end)-yd(end))/yf));
+disp(sprintf('yd: %d\ntf: %d\n perc overshoot: %.3f', yf, tf, y(end)/yf));
 
 %%
 % writematrix(round(100*r_y/0.2), 'r_y.csv');
